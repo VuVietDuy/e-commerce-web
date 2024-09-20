@@ -1,6 +1,6 @@
 import { createContext, useEffect, useState } from "react";
-import { products } from "../assets/assets";
 import { toast } from "react-toastify";
+import fetcher from "../api/fetcher";
 
 export const ShopContext = createContext();
 
@@ -10,6 +10,8 @@ const ShopContextProvider = (props) => {
   const [search, setSearch] = useState("");
   const [showSearch, setShowSearch] = useState(true);
   const [cartItems, setCartItems] = useState({});
+  const [products, setProducts] = useState([]);
+  const [token, setToken] = useState("");
 
   const addToCart = async (productId, size) => {
     if (!size) {
@@ -29,7 +31,47 @@ const ShopContextProvider = (props) => {
       cartData[productId][size] = 1;
     }
     setCartItems(cartData);
+
+    if (token) {
+      try {
+        fetcher.post("/api/carts", {
+          itemId: productId,
+          size,
+        });
+      } catch (error) {
+        toast.error(error.message);
+      }
+    }
   };
+
+  const getProducts = async () => {
+    try {
+      const response = await fetcher.get("/api/products");
+      setProducts(response.data.products);
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
+  const getCartItems = async () => {
+    try {
+      const response = await fetcher.get(`/api/carts`);
+      setCartItems(response.data.cartData);
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
+  useEffect(() => {
+    getProducts();
+  }, []);
+
+  useEffect(() => {
+    if (!token && localStorage.getItem("token")) {
+      setToken(localStorage.getItem("token"));
+      getCartItems();
+    }
+  }, []);
 
   const getCartCount = () => {
     let totalCount = 0;
@@ -48,6 +90,18 @@ const ShopContextProvider = (props) => {
     cartData[productId][size] = quantity;
 
     setCartItems(cartData);
+
+    if (token) {
+      try {
+        await fetcher.put(`/api/carts`, {
+          itemId: productId,
+          size,
+          quantity,
+        });
+      } catch (error) {
+        toast.error(error.message);
+      }
+    }
   };
 
   const getCartAmount = () => {
@@ -73,9 +127,12 @@ const ShopContextProvider = (props) => {
     setShowSearch,
     addToCart,
     cartItems,
+    setCartItems,
     getCartCount,
     updateQuantity,
     getCartAmount,
+    token,
+    setToken,
   };
   return (
     <ShopContext.Provider value={value}>{props.children}</ShopContext.Provider>

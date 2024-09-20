@@ -3,7 +3,6 @@ import { ShopContext } from "../context/ShopContext";
 import { assets } from "../assets/assets";
 import Title from "../components/Title";
 import ProductItem from "../components/ProductItem";
-import SearchBar from "../components/SearchBar";
 
 const Collection = () => {
   const { products, search, showSearch } = useContext(ShopContext);
@@ -71,7 +70,7 @@ const Collection = () => {
 
   useEffect(() => {
     applyFilter();
-  }, [category, subCategory, search]);
+  }, [category, subCategory, search, products]);
 
   useEffect(() => {
     sortProducts();
